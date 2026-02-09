@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart To-Do & Reflection</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+  background: linear-gradient(120deg,#1d2671,#c33764);
+  min-height:100vh;
+  font-family:Segoe UI,sans-serif;
+  color:#fff;
+}
+.app{max-width:900px;margin:auto}
+.card{
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2)
+}
+.section-title{font-weight:600;color:#333}
+.task,.reflect{
+  background:#f8f9fa;
+  color:#000;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.done{
+  background:#d1e7dd;
+  text-decoration:line-through;
+}
+.energy-bar{height:18px;border-radius:10px}
+</style>
+</head>
+
+<body>
+<div class="app py-4">
+
+<h2 class="text-center">🧠 Smart To-Do & Reflection</h2>
+<p class="text-center mb-3">Plan your work • Reflect your day</p>
+
+<!-- ENERGY -->
+<div class="card p-3 mb-3">
+  <label class="section-title">🔋 Daily Energy</label>
+  <div class="progress">
+    <div id="energyBar" class="progress-bar bg-success energy-bar"></div>
+  </div>
+</div>
+
+<!-- TO-DO -->
+<div class="card p-3 mb-3 text-dark">
+  <h5 class="section-title">📝 To-Do List</h5>
+
+  <input id="taskText" class="form-control mb-2" placeholder="Message to future me">
+
+  <div class="row mb-2">
+    <div class="col-md-4">
+      <select id="mood" class="form-select">
+        <option>😄 Happy</option>
+        <option>😐 Normal</option>
+        <option>😴 Tired</option>
+        <option>😡 Angry</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <select id="energyCost" class="form-select">
+        <option value="10">Low Energy (10)</option>
+        <option value="25">Medium Energy (25)</option>
+        <option value="40">High Energy (40)</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <button class="btn btn-success w-100" onclick="addTask()">➕ Add Task</button>
+    </div>
+  </div>
+
+  <div id="taskList"></div>
+</div>
+
+<!-- REFLECTION -->
+<div class="card p-3 text-dark">
+  <h5 class="section-title">🌙 End-of-Day Reflection</h5>
+
+  <div class="input-group mb-2">
+    <input id="reflectionInput" class="form-control" placeholder="Add reflection point">
+    <button class="btn btn-secondary" onclick="addReflection()">Add</button>
+  </div>
+
+  <div id="reflectionList"></div>
+</div>
+
+</div>
+
+<script>
+/* ENERGY */
+let energy = localStorage.getItem("energy") || 100;
+energy = Number(energy);
+updateEnergy();
+
+/* TASKS */
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+renderTasks();
+
+function addTask(){
+  if(!taskText.value) return;
+  let cost = parseInt(energyCost.value);
+  if(energy < cost) return alert("Not enough energy!");
+
+  energy -= cost;
+  localStorage.setItem("energy",energy);
+  updateEnergy();
+
+  tasks.push({
+    text:taskText.value,
+    mood:mood.value,
+    cost:cost,
+    done:false
+  });
+  localStorage.setItem("tasks",JSON.stringify(tasks));
+  taskText.value="";
+  renderTasks();
+}
+
+function renderTasks(){
+  taskList.innerHTML="";
+  tasks.forEach((t,i)=>{
+    taskList.innerHTML+=`
+      <div class="task ${t.done?'done':''}">
+        <input type="checkbox" ${t.done?'checked':''}
+        onclick="toggleTask(${i})">
+        <b>${t.done?'✅ Relief':'❌ Regret'}:</b> ${t.text}<br>
+        <span class="badge bg-info">${t.mood}</span>
+        <span class="badge bg-warning text-dark">Energy ${t.cost}</span>
+        <button class="btn btn-sm btn-danger float-end"
+        onclick="deleteTask(${i})">🗑</button>
+      </div>`;
+  });
+}
+
+function toggleTask(i){
+  tasks[i].done = !tasks[i].done;
+  localStorage.setItem("tasks",JSON.stringify(tasks));
+  renderTasks();
+}
+
+function deleteTask(i){
+  tasks.splice(i,1);
+  localStorage.setItem("tasks",JSON.stringify(tasks));
+  renderTasks();
+}
+
+/* REFLECTION */
+let reflections = JSON.parse(localStorage.getItem("reflections")) || [];
+renderReflections();
+
+function addReflection(){
+  if(!reflectionInput.value) return;
+  reflections.push({text:reflectionInput.value,done:false});
+  localStorage.setItem("reflections",JSON.stringify(reflections));
+  reflectionInput.value="";
+  renderReflections();
+}
+
+function renderReflections(){
+  reflectionList.innerHTML="";
+  reflections.forEach((r,i)=>{
+    reflectionList.innerHTML+=`
+      <div class="reflect ${r.done?'done':''}">
+        <input type="checkbox" ${r.done?'checked':''}
+        onclick="toggleReflection(${i})"> ${r.text}
+        <button class="btn btn-sm btn-danger float-end"
+        onclick="deleteReflection(${i})">🗑</button>
+      </div>`;
+  });
+}
+
+function toggleReflection(i){
+  reflections[i].done = !reflections[i].done;
+  localStorage.setItem("reflections",JSON.stringify(reflections));
+  renderReflections();
+}
+
+function deleteReflection(i){
+  reflections.splice(i,1);
+  localStorage.setItem("reflections",JSON.stringify(reflections));
+  renderReflections();
+}
+
+/* ENERGY UI */
+function updateEnergy(){
+  energyBar.style.width = energy + "%";
+  energyBar.innerText = energy + "%";
+}
+</script>
+
+</body>
+</html>
